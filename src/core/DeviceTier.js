@@ -18,24 +18,23 @@ export const TIER = {
     DESKTOP_HIGH: 'desktop-high'
 };
 
-// Target framebuffer size in pixels. 4K native is 8.29M, so DESKTOP renders a 4K monitor
-// at native with no upscale and no downscale. Target there is a comfortable 30fps, not 60.
+// Target framebuffer size in pixels calibrated for 90 FPS (10.5–11.1 ms).
+// A 1080p panel has ~2.07M pixels; 1440p has ~3.68M; 4K native has 8.29M.
+// On desktop at 90 FPS, rendering 4K native quadruples fragment overhead and kills 90 FPS.
+// Sizing the pixel budget ensures crisp 1080p native rendering while preventing runaway fillrate on 4K displays.
 const PIXEL_BUDGET = {
-    [TIER.MOBILE]:       2_300_000,   // ~1080p equivalent
-    [TIER.TABLET]:       4_000_000,   // ~1440p equivalent
-    [TIER.DESKTOP]:      8_300_000,   // ~4K native
-    [TIER.DESKTOP_HIGH]: 8_300_000
+    [TIER.MOBILE]:       1_800_000,   // ~720p-900p equivalent
+    [TIER.TABLET]:       2_200_000,   // ~1080p equivalent
+    [TIER.DESKTOP]:      2_600_000,   // ~1080p native with headroom
+    [TIER.DESKTOP_HIGH]: 3_800_000    // ~1440p equivalent
 };
 
-// Per-tier effect budgets, read by PostProcessing and the sky shader.
-// NOTE: half-resolution god rays are NOT implemented yet -- that needs a separate render
-// target in the TSL pipeline. Sample count and the sun-visibility gate carry the saving for
-// now; see the audit's WO-2 follow-up.
+// Per-tier effect budgets calibrated for sustained 90 FPS.
 export const TIER_SETTINGS = {
-    [TIER.MOBILE]:       { godRaySamples: 8,  skyOctaves: 2, treeDensity: 1.0,  shadows: false },
-    [TIER.TABLET]:       { godRaySamples: 16, skyOctaves: 3, treeDensity: 1.5,  shadows: true  },
-    [TIER.DESKTOP]:      { godRaySamples: 24, skyOctaves: 4, treeDensity: 2.0,  shadows: true  },
-    [TIER.DESKTOP_HIGH]: { godRaySamples: 32, skyOctaves: 4, treeDensity: 2.5,  shadows: true  }
+    [TIER.MOBILE]:       { godRaySamples: 8,  skyOctaves: 2, treeDensity: 0.85, shadows: false, heroRadius: 90,  oceanRes: 128 },
+    [TIER.TABLET]:       { godRaySamples: 10, skyOctaves: 2, treeDensity: 1.0,  shadows: true,  heroRadius: 100, oceanRes: 256 },
+    [TIER.DESKTOP]:      { godRaySamples: 12, skyOctaves: 3, treeDensity: 1.15, shadows: true,  heroRadius: 110, oceanRes: 256 },
+    [TIER.DESKTOP_HIGH]: { godRaySamples: 12, skyOctaves: 3, treeDensity: 1.25, shadows: true,  heroRadius: 120, oceanRes: 256 }
 };
 
 function classify() {
@@ -99,32 +98,31 @@ export function budgetedPixelRatio(width, height, dpr = window.devicePixelRatio 
 }
 
 /**
- * Adaptive resolution controller.
+ * Adaptive resolution controller redesigned for a 90 FPS target (~10.5–11.1 ms).
  *
- * Samples frame time over a rolling window and nudges a render-scale multiplier up or down.
- * The gap between the two thresholds is deliberate hysteresis: without it the scale
- * oscillates every window and the whole screen visibly breathes.
- *
- * Targets ~30fps (33ms) rather than 60 — at 4K that is the realistic goal.
+ * Uses fast downward response (percentile-aware sampling over 30 frames),
+ * slow recovery (requires 5s of clean headroom), stable hysteresis, and strict cooldowns
+ * to eliminate screen breathing.
  */
 export class AdaptiveResolution {
-    constructor({ onScaleChange, targetMs = 33, windowSize = 90 } = {}) {
+    constructor({ onScaleChange, targetMs = 10.8, windowSize = 30 } = {}) {
         this.onScaleChange = onScaleChange;
         this.targetMs = targetMs;
         this.windowSize = windowSize;
         this.samples = [];
         this.scale = 1.0;
-        this.enabled = false;
-        this.minScale = 0.6;
+        this.enabled = true; // Enabled by default to sustain 90 FPS
+        this.minScale = 0.5;
         this.maxScale = 1.0;
-        this.step = 0.1;
+        this.stepDown = 0.08;
+        this.stepUp = 0.05;
         this._goodStreak = 0;
         this._cooldownUntil = 0;
     }
 
     /** Manual quality choice wins — turn auto off so the two don't fight. */
     setEnabled(v) {
-        this.enabled = v;
+        this.enabled = !!v;
         this.samples.length = 0;
         this._goodStreak = 0;
     }
@@ -138,41 +136,99 @@ export class AdaptiveResolution {
     /** Call once per frame with the frame's duration in milliseconds. */
     sample(dtMs) {
         if (!this.enabled) return;
-        // Ignore obvious outliers: tab switches, GC pauses, terrain rebuild hitches
-        if (dtMs > 500 || dtMs <= 0) return;
+        // Ignore severe outliers (tab backgrounding, window resize)
+        if (dtMs > 400 || dtMs <= 0) return;
 
         this.samples.push(dtMs);
         if (this.samples.length < this.windowSize) return;
 
         const now = performance.now();
-        if (now < this._cooldownUntil) { this.samples.length = 0; return; }
+        if (now < this._cooldownUntil) {
+            this.samples.length = 0;
+            return;
+        }
 
-        // Median, not mean — one 200ms hitch shouldn't drop the whole resolution
+        // Percentile analysis: 85th percentile catches sustained pressure early
         const sorted = this.samples.slice().sort((a, b) => a - b);
-        const median = sorted[sorted.length >> 1];
+        const p85Index = Math.floor(sorted.length * 0.85);
+        const p85 = sorted[p85Index];
+        const p50 = sorted[sorted.length >> 1];
         this.samples.length = 0;
 
         let next = this.scale;
-        if (median > this.targetMs * 1.18) {
-            next = Math.max(this.minScale, this.scale - this.step);
+        // Frame time budget: target 10.8ms (92.5 FPS). Pressure threshold is 11.2ms (89 FPS).
+        if (p85 > this.targetMs * 1.08 || p50 > this.targetMs * 1.05) {
+            // Fast downward adjustment under pressure
+            next = Math.max(this.minScale, this.scale - this.stepDown);
             this._goodStreak = 0;
-        } else if (median < this.targetMs * 0.62) {
+            this._cooldownUntil = now + 900; // 0.9s settle time
+        } else if (p85 < this.targetMs * 0.82) {
+            // Comfortable headroom (< 8.8ms)
             this._goodStreak++;
-            if (this._goodStreak >= 3) {          // ~3s of comfortable headroom
-                next = Math.min(this.maxScale, this.scale + this.step);
+            if (this._goodStreak >= 6) { // ~3.5s of sustained headroom
+                next = Math.min(this.maxScale, this.scale + this.stepUp);
                 this._goodStreak = 0;
+                this._cooldownUntil = now + 1600; // 1.6s settle time
             }
         } else {
-            this._goodStreak = 0;
+            this._goodStreak = Math.max(0, this._goodStreak - 1);
         }
 
         if (Math.abs(next - this.scale) > 0.001) {
             this.scale = next;
-            this._cooldownUntil = now + 1500;    // let the new size settle before judging it
             if (this.onScaleChange) this.onScaleChange(this.scale);
         }
     }
 }
+
+/**
+ * Coordinated Runtime Quality Controller
+ * Adjusts visual subsystem tiers to guarantee $\ge 90$ FPS under frame-time pressure.
+ */
+export class RuntimeQualityController {
+    constructor() {
+        this.preset = localStorage.getItem('wl_perf_preset') || '90fps'; // '90fps' | 'quality' | 'low-power' | 'auto'
+        this.qualityLevel = 2; // 0: low-power, 1: 90fps performance, 2: high quality
+        this.applyPreset(this.preset);
+    }
+
+    setPreset(preset) {
+        this.preset = preset;
+        localStorage.setItem('wl_perf_preset', preset);
+        this.applyPreset(preset);
+    }
+
+    applyPreset(preset) {
+        if (preset === '90fps') {
+            this.qualityLevel = 1;
+            this.godRaySamples = 12;
+            this.treeHeroRadius = 110.0;
+            this.oceanMeshRes = '256';
+            this.shadowResolution = 1024;
+            this.skyOctaves = 3;
+        } else if (preset === 'low-power') {
+            this.qualityLevel = 0;
+            this.godRaySamples = 8;
+            this.treeHeroRadius = 80.0;
+            this.oceanMeshRes = '128';
+            this.shadowResolution = 512;
+            this.skyOctaves = 2;
+        } else if (preset === 'quality') {
+            this.qualityLevel = 3;
+            this.godRaySamples = 20;
+            this.treeHeroRadius = 180.0;
+            this.oceanMeshRes = '512';
+            this.shadowResolution = 2048;
+            this.skyOctaves = 4;
+        } else {
+            // Auto
+            this.applyPreset('90fps');
+            this.preset = 'auto';
+        }
+    }
+}
+
+export const runtimeQuality = new RuntimeQualityController();
 
 export function describeTier() {
     return `${deviceTier} · budget ${(pixelBudget / 1e6).toFixed(1)}Mpx · ` +

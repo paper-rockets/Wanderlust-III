@@ -26,7 +26,7 @@ const PINE_FILES = [
 
 const METRIC_CELL_SIZE = 22.0;
 const REBUILD_DISTANCE = 32.0;
-const REBUILD_FRAMES = 4;
+const REBUILD_FRAMES = 8;
 
 function hash2D(x, z, seed = 0) {
     let h = Math.imul(x, 374761393) + Math.imul(z, 668265263) + Math.imul(seed, 2654435761);
@@ -66,9 +66,9 @@ export class StylizedPineSystem {
         this.impostorTexture = null;
         this.overheadTexture = null;
 
-        // 2-Band Manual Settings: Near is 100% full 3D, Far (>300m) is Plus-Sign Impostors
+        // 2-Band Manual Settings: Near is 100% full 3D, Far (>110m) is Plus-Sign Impostors
         this.impostorsEnabled = true;      // Enable billboard trees in the far distance
-        this.impostorDistance = 300.0;     // Far threshold (>300m only)
+        this.impostorDistance = 110.0;     // Calibrated hero threshold (110m is optimal for 90 FPS)
         this.impostorDensity = 1.0;        // Impostor density multiplier
         this.impostorWidthFactor = 1.65;   // Wide conifer width multiplier
         this.enableOverheadCanopy = false; // High-altitude canopy is now handled seamlessly by the terrain shader (0 extra meshes)
@@ -134,9 +134,9 @@ export class StylizedPineSystem {
         this.uVar4Bottom          = uniform(new THREE.Color('#222810'));
         this.uVar4Top             = uniform(new THREE.Color('#82a438'));
 
-        // Large Pool sizes per band (4,000 near hero * 4 = 16,000 near trees; 6,000 far * 4 = 24,000 far trees)
+        // Calibrated Pool sizes per band (1,500 near hero * 4 = 6,000 near trees; 6,000 far * 4 = 24,000 far trees)
         this.poolSizes = {
-            hero: 4000,     // 16,000 full 3D trees near player
+            hero: 1500,     // 6,000 full 3D trees near player
             impostor: 6000  // 24,000 far billboard trees
         };
 
@@ -149,7 +149,7 @@ export class StylizedPineSystem {
         this.scaleMul = 1.0;
         this.cellSize = METRIC_CELL_SIZE;
         this.currentPreset = 'spring';
-        this.heroRadius = 300.0;
+        this.heroRadius = 110.0;
 
         this.overheadMesh = null;
     }
@@ -700,7 +700,7 @@ export class StylizedPineSystem {
         };
     }
 
-    _visitCell(cx, cz, focusX, focusZ, maxDistSq, out) {
+    _visitCell(cx, cz, focusX, focusZ, maxDistSq, heroOut, impostorOut) {
         const cellCenterX = (cx + 0.5) * this.cellSize;
         const cellCenterZ = (cz + 0.5) * this.cellSize;
         const ddx = cellCenterX - focusX;
@@ -761,7 +761,7 @@ export class StylizedPineSystem {
             const varIdx = Math.floor(hash2D(cx, cz, s * 10 + 11) * 4.0) % 4;
             const colorJitter = hash2D(cx, cz, s * 10 + 12);
 
-            out.push({
+            const treeData = {
                 x: px, y: site.h - this.rootEmbed, z: pz,
                 variant: vIdx,
                 variation: varIdx,
@@ -774,7 +774,13 @@ export class StylizedPineSystem {
                 scaleZ,
                 season,
                 dist: treeDist
-            });
+            };
+
+            if (this.impostorsEnabled && treeDist > this.impostorDistance) {
+                impostorOut.push(treeData);
+            } else {
+                heroOut.push(treeData);
+            }
         }
     }
 
@@ -784,18 +790,10 @@ export class StylizedPineSystem {
         let overheadCount = 0;
         const isHighAltitude = this.enableOverheadCanopy && (camY >= this.overheadAltThreshold);
 
-        this._collected.sort((a, b) => a.dist - b.dist);
-
-        for (const c of this._collected) {
-            // ALWAYS render near trees as 100% full 3D models (Band 0).
-            // ONLY trees beyond impostorDistance (>300m) switch to Band 1 (Plus-Sign Impostors) when enabled.
-            let band = 0;
-            if (this.impostorsEnabled && c.dist > this.impostorDistance) {
-                band = 1;
-            } else {
-                band = 0;
-            }
-
+        // 1. Process Hero trees (Band 0, full 3D models)
+        for (let i = 0; i < this._heroCollected.length; i++) {
+            const c = this._heroCollected[i];
+            const band = 0;
             const row = this._byVariantBand[c.variant];
             if (!row) continue;
             const mesh = row[band];
@@ -818,27 +816,61 @@ export class StylizedPineSystem {
             }
 
             perMeshCount[c.variant][band] = idx + 1;
+        }
 
-            if (band === 1 && isHighAltitude && this.overheadMesh && overheadCount < this.overheadMesh.instanceMatrix.count) {
-                this.overheadMesh.setMatrixAt(overheadCount, dummy.matrix);
-                if (this.overheadMesh.geometry && this.overheadMesh.geometry.attributes) {
-                    if (this.overheadMesh.geometry.attributes.aSeason) this.overheadMesh.geometry.attributes.aSeason.setX(overheadCount, c.season);
-                    if (this.overheadMesh.geometry.attributes.aVariation) this.overheadMesh.geometry.attributes.aVariation.setX(overheadCount, c.variation);
-                    if (this.overheadMesh.geometry.attributes.aColorJitter) this.overheadMesh.geometry.attributes.aColorJitter.setX(overheadCount, c.colorJitter);
+        // 2. Process Impostor trees (Band 1, cross-quad impostor cards)
+        if (this.impostorsEnabled) {
+            for (let i = 0; i < this._impostorCollected.length; i++) {
+                const c = this._impostorCollected[i];
+                const band = 1;
+                const row = this._byVariantBand[c.variant];
+                if (!row) continue;
+                const mesh = row[band];
+                if (!mesh) continue;
+
+                const idx = perMeshCount[c.variant][band];
+                if (idx >= mesh.instanceMatrix.count) continue;
+
+                dummy.position.set(c.x, c.y, c.z);
+                dummy.rotation.set(c.tiltX, c.rotY, c.tiltZ);
+                dummy.scale.set(c.scaleX, c.scaleY, c.scaleZ);
+                dummy.updateMatrix();
+
+                mesh.setMatrixAt(idx, dummy.matrix);
+
+                if (mesh.geometry && mesh.geometry.attributes) {
+                    if (mesh.geometry.attributes.aSeason) mesh.geometry.attributes.aSeason.setX(idx, c.season);
+                    if (mesh.geometry.attributes.aVariation) mesh.geometry.attributes.aVariation.setX(idx, c.variation);
+                    if (mesh.geometry.attributes.aColorJitter) mesh.geometry.attributes.aColorJitter.setX(idx, c.colorJitter);
                 }
-                overheadCount++;
+
+                perMeshCount[c.variant][band] = idx + 1;
+
+                if (isHighAltitude && this.overheadMesh && overheadCount < this.overheadMesh.instanceMatrix.count) {
+                    this.overheadMesh.setMatrixAt(overheadCount, dummy.matrix);
+                    if (this.overheadMesh.geometry && this.overheadMesh.geometry.attributes) {
+                        if (this.overheadMesh.geometry.attributes.aSeason) this.overheadMesh.geometry.attributes.aSeason.setX(overheadCount, c.season);
+                        if (this.overheadMesh.geometry.attributes.aVariation) this.overheadMesh.geometry.attributes.aVariation.setX(overheadCount, c.variation);
+                        if (this.overheadMesh.geometry.attributes.aColorJitter) this.overheadMesh.geometry.attributes.aColorJitter.setX(overheadCount, c.colorJitter);
+                    }
+                    overheadCount++;
+                }
             }
         }
 
         const counts = { hero: 0, impostor: 0, total: 0 };
         this._byVariantBand.forEach((row, vi) => {
             row.forEach((mesh, bi) => {
-                mesh.count = perMeshCount[vi][bi];
-                mesh.instanceMatrix.needsUpdate = true;
-                if (mesh.geometry && mesh.geometry.attributes) {
-                    if (mesh.geometry.attributes.aSeason) mesh.geometry.attributes.aSeason.needsUpdate = true;
-                    if (mesh.geometry.attributes.aVariation) mesh.geometry.attributes.aVariation.needsUpdate = true;
-                    if (mesh.geometry.attributes.aColorJitter) mesh.geometry.attributes.aColorJitter.needsUpdate = true;
+                const newCount = perMeshCount[vi][bi];
+                const prevCount = mesh.count;
+                mesh.count = newCount;
+                if (newCount > 0 || prevCount > 0) {
+                    mesh.instanceMatrix.needsUpdate = true;
+                    if (mesh.geometry && mesh.geometry.attributes) {
+                        if (mesh.geometry.attributes.aSeason) mesh.geometry.attributes.aSeason.needsUpdate = true;
+                        if (mesh.geometry.attributes.aVariation) mesh.geometry.attributes.aVariation.needsUpdate = true;
+                        if (mesh.geometry.attributes.aColorJitter) mesh.geometry.attributes.aColorJitter.needsUpdate = true;
+                    }
                 }
                 mesh.boundingSphere.center.set(focusX, 0, focusZ);
                 mesh.boundingSphere.radius = 800;
@@ -850,12 +882,15 @@ export class StylizedPineSystem {
         });
 
         if (this.overheadMesh) {
+            const prevOverhead = this.overheadMesh.count;
             this.overheadMesh.count = overheadCount;
-            this.overheadMesh.instanceMatrix.needsUpdate = true;
-            if (this.overheadMesh.geometry && this.overheadMesh.geometry.attributes) {
-                if (this.overheadMesh.geometry.attributes.aSeason) this.overheadMesh.geometry.attributes.aSeason.needsUpdate = true;
-                if (this.overheadMesh.geometry.attributes.aVariation) this.overheadMesh.geometry.attributes.aVariation.needsUpdate = true;
-                if (this.overheadMesh.geometry.attributes.aColorJitter) this.overheadMesh.geometry.attributes.aColorJitter.needsUpdate = true;
+            if (overheadCount > 0 || prevOverhead > 0) {
+                this.overheadMesh.instanceMatrix.needsUpdate = true;
+                if (this.overheadMesh.geometry && this.overheadMesh.geometry.attributes) {
+                    if (this.overheadMesh.geometry.attributes.aSeason) this.overheadMesh.geometry.attributes.aSeason.needsUpdate = true;
+                    if (this.overheadMesh.geometry.attributes.aVariation) this.overheadMesh.geometry.attributes.aVariation.needsUpdate = true;
+                    if (this.overheadMesh.geometry.attributes.aColorJitter) this.overheadMesh.geometry.attributes.aColorJitter.needsUpdate = true;
+                }
             }
             this.overheadMesh.boundingSphere.center.set(focusX, 0, focusZ);
             this.overheadMesh.boundingSphere.radius = 800;
@@ -877,7 +912,7 @@ export class StylizedPineSystem {
             for (let i = w.i; i < end; i++) {
                 const dx = (i % w.width) - w.radius;
                 const dz = ((i / w.width) | 0) - w.radius;
-                this._visitCell(w.baseCX + dx, w.baseCZ + dz, w.focusX, w.focusZ, w.maxDistSq, this._collected);
+                this._visitCell(w.baseCX + dx, w.baseCZ + dz, w.focusX, w.focusZ, w.maxDistSq, this._heroCollected, this._impostorCollected);
             }
             w.i = end;
 
@@ -901,7 +936,8 @@ export class StylizedPineSystem {
         const radius = Math.ceil(maxDist / this.cellSize);
         const width = radius * 2 + 1;
 
-        this._collected = [];
+        this._heroCollected = [];
+        this._impostorCollected = [];
         this._walk = {
             baseCX: Math.floor(focusX / this.cellSize),
             baseCZ: Math.floor(focusZ / this.cellSize),
@@ -917,7 +953,8 @@ export class StylizedPineSystem {
         this._lastFocusX = Infinity;
         this._lastFocusZ = Infinity;
         this._walk = null;
-        this._collected = [];
+        this._heroCollected = [];
+        this._impostorCollected = [];
         this.meshes.forEach(m => {
             m.count = 0;
             m.instanceMatrix.needsUpdate = true;

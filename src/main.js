@@ -589,6 +589,7 @@ import { postProcessing as composer, scenePass, initPostProcessing, bloomPass, g
     const CRYSTAL_COUNT = crystalSystem.count;
     const matCrystal = crystalSystem.matCrystal;
     const crystalBaseY = new Float32Array(CRYSTAL_COUNT).fill(-9999);
+    const crystalMinY = new Float32Array(CRYSTAL_COUNT).fill(-9999);
     window.instCrystals = instCrystals;
 
     const lightingSystem = createLightingSystem({ scene });
@@ -1235,10 +1236,7 @@ import { postProcessing as composer, scenePass, initPostProcessing, bloomPass, g
 
 
 
-        // === TREE VISIBILITY: runs EVERY FRAME (not gated by shouldUpdateTerrain) ===
-        // We calculate treesPossibleNearby here so we can fully hide tree meshes and save massive GPU vertex processing
-        let treesPossibleNearby = false;
-        {
+        if (shouldUpdateTerrain) {
             const isFreeCamVis = (window.editorState && window.editorState.isEditorMode) || isGodMode;
             const visFocusX = isFreeCamVis ? (isGodMode ? godCamera.position.x : camera.position.x) : playerX;
             const visFocusZ = isFreeCamVis ? (isGodMode ? godCamera.position.z : camera.position.z) : playerZ;
@@ -1252,6 +1250,7 @@ import { postProcessing as composer, scenePass, initPostProcessing, bloomPass, g
                 { x: visFocusX, z: visFocusZ - checkDist }
             ];
             
+            let treesPossibleNearby = false;
             for (let pIdx = 0; pIdx < points.length; pIdx++) {
                 const p = points[pIdx];
                 const biome = getBiomeAt(p.x, p.z);
@@ -1276,14 +1275,11 @@ import { postProcessing as composer, scenePass, initPostProcessing, bloomPass, g
             if (typeof instBillboardTrees !== 'undefined') instBillboardTrees.visible = false;
             if (typeof instJungleBillboardTrees !== 'undefined') instJungleBillboardTrees.visible = false;
             if (window.instJungleTreeParts) window.instJungleTreeParts.forEach(m => m.visible = showAnyTrees);
-        }
 
-        if (shouldUpdateTerrain) {
             // Center tree updates on camera position when in editor/freecam/God Mode or player when flying
-            const isFreeCam = (window.editorState && window.editorState.isEditorMode) || isGodMode;
-            const focusX = isFreeCam ? (isGodMode ? godCamera.position.x : camera.position.x) : playerX;
-            const focusZ = isFreeCam ? (isGodMode ? godCamera.position.z : camera.position.z) : playerZ;
-            const activeCam = isFreeCam ? (isGodMode ? godCamera : camera) : camera;
+            const focusX = visFocusX;
+            const focusZ = visFocusZ;
+            const activeCam = isFreeCamVis ? (isGodMode ? godCamera : camera) : camera;
             
             // Stylized Pine Biome Trees: natural clusters + accents, multi-point cliff exclusion,
             // active camera frustum culling, and 3 LOD bands.
@@ -2542,7 +2538,6 @@ import { postProcessing as composer, scenePass, initPostProcessing, bloomPass, g
 
     async function animate() {
         if (window.is3DViewportHidden) {
-            requestAnimationFrame(animate);
             return;
         }
         if (proceduralSkyMesh && !isGodMode) {
@@ -2552,6 +2547,11 @@ import { postProcessing as composer, scenePass, initPostProcessing, bloomPass, g
         
         const nowAnimTime = performance.now();
         let rawDt = (nowAnimTime - lastAnimTime) / 1000.0;
+
+        const pWorldX = (typeof playerGrp !== 'undefined' && playerGrp && playerGrp.position) ? playerGrp.position.x : 0;
+        const pWorldZ = (typeof playerGrp !== 'undefined' && playerGrp && playerGrp.position) ? playerGrp.position.z : 0;
+        const cachedBiome = getBiomeAt(pWorldX, pWorldZ);
+        const cachedGroundY = getWorldHeight(pWorldX, pWorldZ);
 
         if (!playerPhysics && typeof playerGrp !== 'undefined') {
             playerPhysics = new PlayerPhysics(playerGrp);

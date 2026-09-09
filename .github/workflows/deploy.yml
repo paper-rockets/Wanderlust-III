@@ -1,8 +1,8 @@
-name: Deploy WebGPU + WebGL to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ['main', 'webgl']
+    branches: ['main']
   workflow_dispatch:
 
 permissions:
@@ -21,45 +21,26 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main (WebGPU)
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: main
-          path: webgpu
-          lfs: true
-
-      - name: Checkout webgl branch
-        uses: actions/checkout@v4
-        with:
-          ref: webgl
-          path: webgl
           lfs: true
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
-      - name: Build WebGPU
-        working-directory: webgpu
+      - name: Install dependencies
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
+        run: npm ci
+
+      - name: Build
         run: |
-          npm ci
           npm run build
-          cp -r assets/* dist/assets/ 2>/dev/null || true
-
-      - name: Build WebGL
-        working-directory: webgl
-        run: |
-          npm ci
-          npm run build
-          cp -r assets/* dist/assets/ 2>/dev/null || true
-
-      - name: Combine builds
-        run: |
-          mkdir -p site
-          cp -r webgpu/dist/* site/
-          mkdir -p site/webgl
-          cp -r webgl/dist/* site/webgl/
+          cp -r dist/low-power dist/webgl
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -67,7 +48,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './site'
+          path: './dist'
 
       - name: Deploy to GitHub Pages
         id: deployment

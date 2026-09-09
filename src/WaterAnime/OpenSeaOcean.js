@@ -783,9 +783,9 @@ export const createOpenSeaMaterial = () => {
     ).toVar();
 
     // ---- Beer-Lambert transmission to the sea bed --------------------------
-    // Only evaluated when depth is shallow enough (<25m) for sea floor transmission to be visible.
+    // Only evaluated when depth is shallow enough (<14m) for sea floor transmission to be visible.
     const body = openBody.toVar();
-    If(depth.lessThan(25.0), () => {
+    If(depth.lessThan(14.0), () => {
       const refrXz = xz.add(N.xz.mul(shoreRefractionUniform.mul(3.0)));
       const depthR = max(sampleWaterDepth(refrXz), float(0.0));
       const T = exp(extinctionUniform.mul(min(depthR, float(60.0))).mul(-2.0));

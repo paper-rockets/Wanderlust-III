@@ -1,8 +1,6 @@
 import * as THREE from 'three';
 import { MeshBasicNodeMaterial } from 'three/webgpu';
 import { tierSettings } from '../../core/DeviceTier.js';
-
-const SKY_OCTAVES = Math.max(2, Math.min(4, tierSettings.skyOctaves));
 import {
     Fn, If, vec2, vec3, vec4, uniform, positionWorld, cameraPosition, normalize,
     dot, cross, clamp, mix, pow, smoothstep, float, sin, fract, abs, max, floor, step, exp
@@ -23,14 +21,6 @@ const noise = Fn(([p]) => {
     );
 });
 
-
-// Octave count is set by device tier. The cloud silhouette is dominated by the first two
-// octaves; the last two only add fine detail that is invisible on a phone screen. This is the
-// most expensive shader in the project -- three domain-warped FBM evaluations per pixel, over
-// the whole sky dome -- so the octave count is the single biggest lever on its cost.
-//
-// Amplitudes are renormalised per tier so a 2-octave sky has the same overall contrast as a
-// 4-octave one, rather than looking washed out.
 const makeFbm = (octaves) => {
     const amps = [0.5, 0.25, 0.125, 0.0625].slice(0, octaves);
     const norm = 0.9375 / amps.reduce((a, b) => a + b, 0);
@@ -46,7 +36,13 @@ const makeFbm = (octaves) => {
     });
 };
 
-const fbm = makeFbm(SKY_OCTAVES);
+const SKY_OCTAVES = Math.max(2, Math.min(3, tierSettings.skyOctaves || 3));
+
+// Fast 2-octave FBM for domain warping (displaces UVs smoothly without fine-grain noise cost)
+const fbmWarp = makeFbm(2);
+// Calibrated 3-octave FBM for main cloud density, preserving crisp billowy anime silhouettes
+const fbmMain = makeFbm(SKY_OCTAVES);
+const fbm = fbmMain;
 
 // 3D hash for star placement -- one value per direction cell.
 const hash3 = Fn(([p]) => {
@@ -265,9 +261,10 @@ export function createProceduralSky() {
         const uvSample = cloudUV.add(windOffset).add(vec2(14.8, 32.4));
 
         // Billowy Anime / Ghibli FBM Cloud Density with Domain Warping
-        const q = vec2(fbm(uvSample), fbm(uvSample.add(vec2(5.2, 1.3))));
+        // Decouple coarse domain warp (2 octaves) from main cloud noise (3 octaves)
+        const q = vec2(fbmWarp(uvSample), fbmWarp(uvSample.add(vec2(5.2, 1.3))));
         const warpedUV = uvSample.add(q.mul(0.8).add(q.mul(uCloudTurbulence)));
-        const cloudNoise = fbm(warpedUV);
+        const cloudNoise = fbmMain(warpedUV);
 
         // Biome Coverage & Soft Edge Thresholding
         const lowThreshold = float(1.0).sub(uCloudCoverage);

@@ -33,15 +33,15 @@ export class WaterSystem {
         this.scene = scene;
         this.renderer = renderer;
 
-        // Resolution geometries cache
+        // Resolution geometries cache (default 256x256 saves 75% vertex overhead vs 512)
+        this.meshResolution = '256';
+        this._resNum = 256;
         this.geometries = {
-            '512': this._createPlaneGeo(512),
             '256': this._createPlaneGeo(256),
             '128': this._createPlaneGeo(128)
         };
 
-        this.meshResolution = '512';
-        this.qualityMode = 'high'; // 'high' | 'performance'
+        this.qualityMode = 'performance'; // 'high' | 'performance'
         this.distanceLod = true;
 
         // CPU-baked terrain height field for shoreline shading.
@@ -54,7 +54,7 @@ export class WaterSystem {
         waterLevelUniform.value = this.waterLevel;
 
         this.openSeaMaterial = createOpenSeaMaterial();
-        this.openSeaMesh = new THREE.Mesh(this.geometries['512'], this.openSeaMaterial);
+        this.openSeaMesh = new THREE.Mesh(this.geometries['256'], this.openSeaMaterial);
         this.openSeaMesh.frustumCulled = false;
         this.openSeaMesh.castShadow = false;
         this.openSeaMesh.receiveShadow = false;
@@ -76,9 +76,14 @@ export class WaterSystem {
 
     setMeshResolution(res) {
         const key = String(res);
+        if (!this.geometries[key]) {
+            const num = parseInt(key, 10);
+            if (num > 0) this.geometries[key] = this._createPlaneGeo(num);
+        }
         if (this.geometries[key] && this.openSeaMesh) {
             this.openSeaMesh.geometry = this.geometries[key];
             this.meshResolution = key;
+            this._resNum = parseInt(key, 10) || 256;
         }
     }
 
@@ -91,7 +96,7 @@ export class WaterSystem {
         } else {
             qualityModeUniform.value = 1.0;
             distanceLodUniform.value = 1.0;
-            this.setMeshResolution(512);
+            this.setMeshResolution(256);
         }
     }
 
@@ -144,16 +149,12 @@ export class WaterSystem {
         }
 
         // Ocean plane follows camera in XZ for infinite horizon, SNAPPED to the vertex grid.
-        //
-        // Following the raw camera position slid the 31.25 m sampling lattice continuously
-        // beneath a world-locked wave field, so the sampling pattern stayed pinned to the
-        // viewer and travelled with them -- waves never read as passing by. Snapping to whole
-        // grid cells keeps every vertex on the same world position it had last frame.
         if (this.openSeaMesh && camera) {
             if (!this._tempCamPos) this._tempCamPos = new THREE.Vector3();
             camera.getWorldPosition(this._tempCamPos);
-            const cell = 16000 / 512;   // 31.25m, must match the mesh tessellation
-            const invCell = 512 / 16000;
+            const res = this._resNum || 256;
+            const cell = 16000 / res;
+            const invCell = res / 16000;
             this.openSeaMesh.position.x = Math.round(this._tempCamPos.x * invCell) * cell;
             this.openSeaMesh.position.z = Math.round(this._tempCamPos.z * invCell) * cell;
         }
