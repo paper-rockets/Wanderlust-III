@@ -1,0 +1,10 @@
+{
+    "gemini": {
+        "weekly_used_pct": 100,
+        "five_hour_used_pct": 76
+    },
+    "claude": {
+        "weekly_used_pct": 67,
+        "five_hour_used_pct": 100
+    }
+}

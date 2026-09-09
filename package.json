@@ -1,0 +1,28 @@
+{
+  "name": "wanderlust",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host --port=8000 ",
+    "build": "vite build",
+    "preview": "vite preview",
+    "clean": "rm -rf dist server.js",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "three": "^0.185.1",
+    "vite": "^6.2.3"
+  },
+  "devDependencies": {
+    "@gltf-transform/core": "^4.4.2",
+    "@gltf-transform/extensions": "^4.4.2",
+    "@gltf-transform/functions": "^4.4.2",
+    "@types/node": "^22.14.0",
+    "draco3d": "^1.5.7",
+    "esbuild": "^0.25.0",
+    "puppeteer": "^25.5.0",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2"
+  }
+}

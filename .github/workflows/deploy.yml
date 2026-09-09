@@ -1,0 +1,74 @@
+name: Deploy WebGPU + WebGL to GitHub Pages
+
+on:
+  push:
+    branches: ['main', 'webgl']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (WebGPU)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: webgpu
+          lfs: true
+
+      - name: Checkout webgl branch
+        uses: actions/checkout@v4
+        with:
+          ref: webgl
+          path: webgl
+          lfs: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build WebGPU
+        working-directory: webgpu
+        run: |
+          npm ci
+          npm run build
+          cp -r assets/* dist/assets/ 2>/dev/null || true
+
+      - name: Build WebGL
+        working-directory: webgl
+        run: |
+          npm ci
+          npm run build
+          cp -r assets/* dist/assets/ 2>/dev/null || true
+
+      - name: Combine builds
+        run: |
+          mkdir -p site
+          cp -r webgpu/dist/* site/
+          mkdir -p site/webgl
+          cp -r webgl/dist/* site/webgl/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './site'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

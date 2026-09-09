@@ -1,0 +1,209 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FLIGHT_MERGED Environment & Visual Settings",
+  "version": "1.1.0",
+  "presets": {
+    "day": {
+      "timeOfDay": "Day",
+      "timePhase": 0,
+      "atmosphereAndWeather": {
+        "groundFog": {
+          "enableFog": false,
+          "biomeFogOffset": 0,
+          "fogColor": "#8cbce6",
+          "fogNear": 100,
+          "fogFar": 1800
+        },
+        "skyZenith": "#4a90d9",
+        "skyHorizon": "#b8d4e8",
+        "skyColor": "#8cbce6",
+        "fogColor": "#8cbce6",
+        "ambientLight": "#dcf2ff",
+        "ambIntensity": 0.9,
+        "waterGlint": "#fff0d0",
+        "globalBrightness": 1.8
+      },
+      "sunAndSunlight": {
+        "sunDiscColor": "#ffffff",
+        "sunDiscScale": 1.7,
+        "sunAltitudeHeight": 1500,
+        "sunAzimuth": 0,
+        "sunDistance": 20000,
+        "lockSunToPlayer": true,
+        "sunlightColor": "#fffaeb",
+        "sunlightIntensity": 2.5,
+        "waterGlintColor": "#fff0d0",
+        "sunMeshBaseRadius": 600,
+        "sunPositionFormula": {
+          "x": "player.x + sin(azimuth) * sunDistance",
+          "y": "player.y * 0.45 + sunAltitudeHeight",
+          "z": "player.z - cos(azimuth) * sunDistance"
+        }
+      },
+      "godRaysEditor": {
+        "enableGodRays": true,
+        "rayIntensity": 0.65,
+        "rayDecayLength": 0.927,
+        "rayDensitySpread": 0.5,
+        "rayWeightBrightness": 0.75,
+        "rayInnerColor": "#fffaeb",
+        "rayOuterColor": "#ffaa44",
+        "occlusionMinInclusion": 0.45,
+        "occlusionMaxCutoff": 0.85,
+        "particleDitherHaze": 1,
+        "screenEdgeFadeDist": 1.5,
+        "bloomHaloRadius": 0.2,
+        "bloomHaloStrength": 0.25,
+        "samples": 32
+      },
+      "proceduralSky": {
+        "cloudCoverage": 0.45,
+        "cloudEdge": 0.07,
+        "cloudSpeed": 0.02,
+        "skyZenith": "#4a90d9",
+        "skyHorizon": "#b8d4e8",
+        "cloudColor": "#fff8fe",
+        "cloudShadow": "#8898a8",
+        "stormTurbulence": 0,
+        "stormDarken": 0,
+        "cloudOpacity": 1.0,
+        "weather": "clear"
+      },
+      "water": {
+        "shore": {
+          "sandColor": "#ede7ce",
+          "shoreShallowColor": "#99ddda",
+          "shoreDepth": 6.0,
+          "shoreOpacity": 0.1,
+          "shoreFoamWidth": 2.2,
+          "shoreFoamSpeed": 0.8,
+          "shoreFoamStrength": 1.0,
+          "shoreRefraction": 0.35
+        }
+      }
+    },
+    "dusk": {
+      "timeOfDay": "Dusk",
+      "timePhase": 1,
+      "atmosphereAndWeather": {
+        "groundFog": {
+          "enableFog": false,
+          "biomeFogOffset": 0,
+          "fogColor": "#ffa07a",
+          "fogNear": 100,
+          "fogFar": 1800
+        },
+        "skyZenith": "#4a90d9",
+        "skyHorizon": "#b8d4e8",
+        "skyColor": "#ffa07a",
+        "fogColor": "#ffa07a",
+        "ambientLight": "#ffdab9",
+        "ambIntensity": 1.1,
+        "waterGlint": "#ffaa00",
+        "globalBrightness": 1.8
+      },
+      "sunAndSunlight": {
+        "sunDiscColor": "#ffffff",
+        "sunDiscScale": 1.7,
+        "sunAltitudeHeight": 160,
+        "sunAzimuth": 0,
+        "sunDistance": 20000,
+        "lockSunToPlayer": true,
+        "sunlightColor": "#ffaa00",
+        "sunlightIntensity": 3.2,
+        "waterGlintColor": "#ffaa00",
+        "sunMeshBaseRadius": 600,
+        "sunPositionFormula": {
+          "x": "player.x + sin(azimuth) * sunDistance",
+          "y": "player.y * 0.45 + sunAltitudeHeight",
+          "z": "player.z - cos(azimuth) * sunDistance"
+        }
+      },
+      "godRaysEditor": {
+        "enableGodRays": true,
+        "rayIntensity": 0.65,
+        "rayDecayLength": 0.927,
+        "rayDensitySpread": 0.5,
+        "rayWeightBrightness": 0.75,
+        "rayInnerColor": "#ffaa44",
+        "rayOuterColor": "#ff5500",
+        "occlusionMinInclusion": 0.45,
+        "occlusionMaxCutoff": 0.85,
+        "particleDitherHaze": 1,
+        "screenEdgeFadeDist": 1.5,
+        "bloomHaloRadius": 0.2,
+        "bloomHaloStrength": 0.25,
+        "samples": 32
+      },
+      "proceduralSky": {
+        "cloudCoverage": 0.45,
+        "cloudEdge": 0.07,
+        "cloudSpeed": 0.02,
+        "skyZenith": "#4a90d9",
+        "skyHorizon": "#b8d4e8",
+        "cloudColor": "#fff8fe",
+        "cloudShadow": "#8898a8",
+        "stormTurbulence": 0,
+        "stormDarken": 0,
+        "cloudOpacity": 1.0,
+        "weather": "clear"
+      },
+      "water": {
+        "shore": {
+          "sandColor": "#ede7ce",
+          "shoreShallowColor": "#99ddda",
+          "shoreDepth": 6.0,
+          "shoreOpacity": 0.1,
+          "shoreFoamWidth": 2.2,
+          "shoreFoamSpeed": 0.8,
+          "shoreFoamStrength": 1.0,
+          "shoreRefraction": 0.35
+        }
+      }
+    },
+    "night": {
+      "timeOfDay": "Night",
+      "timePhase": 2,
+      "moonlightAndNight": {
+        "globalBrightness": 1.8,
+        "moonlightColor": "#ffbb55",
+        "moonlightPower": 3.5,
+        "nightFillColor": "#7788bb",
+        "nightFillPower": 1.5,
+        "nightSkyColor": "#162d5a",
+        "nightFogColor": "#224888",
+        "moonAltitude": 2200,
+        "moonDistance": 20000,
+        "moonMeshBaseRadius": 450,
+        "moonHaloRadius": 650
+      },
+      "sunAndSunlight": {
+        "sunDiscColor": "#ffffff",
+        "sunDiscScale": 1.7,
+        "sunAltitudeHeight": -8000,
+        "sunAzimuth": 0,
+        "sunDistance": 20000,
+        "lockSunToPlayer": true,
+        "sunlightColor": "#ffbb55",
+        "sunlightIntensity": 0.0,
+        "waterGlintColor": "#ffaa44"
+      },
+      "godRaysEditor": {
+        "enableGodRays": false,
+        "rayIntensity": 0.0
+      },
+      "water": {
+        "shore": {
+          "sandColor": "#ede7ce",
+          "shoreShallowColor": "#99ddda",
+          "shoreDepth": 6.0,
+          "shoreOpacity": 0.1,
+          "shoreFoamWidth": 2.2,
+          "shoreFoamSpeed": 0.8,
+          "shoreFoamStrength": 1.0,
+          "shoreRefraction": 0.35
+        }
+      }
+    }
+  }
+}

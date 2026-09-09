@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Wanderlust - Low Power / Tab S6 Lite (WebGPU)</title>
+  <style>
+    :root { color-scheme: dark; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      overflow: hidden; background: #62b1e8;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      touch-action: none;
+      user-select: none;
+    }
+    #app { position: fixed; inset: 0; touch-action: none; }
+    canvas { display: block; touch-action: none; }
+
+    #touch-controls {
+      position: fixed; inset: 0; z-index: 20; pointer-events: none;
+      display: none;
+    }
+    body.force-mobile #touch-controls,
+    .force-mobile #touch-controls {
+      display: block !important;
+    }
+
+    #joystick-base {
+      position: absolute; left: 35px; bottom: 35px;
+      width: 110px; height: 110px; border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08); border: 1.5px dashed rgba(255, 255, 255, 0.25);
+      pointer-events: auto;
+      opacity: 0.5;
+    }
+
+    #joystick-knob {
+      position: absolute; left: 50%; top: 50%;
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(255, 255, 255, 0.35);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    #boost-btn {
+      position: fixed; right: 25px; bottom: 30px;
+      width: 80px; height: 80px; border-radius: 50%;
+      color: rgba(255, 255, 255, 0.85); font-weight: bold; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      user-select: none; pointer-events: auto;
+      background: rgba(255, 255, 255, 0.12); border: 1.5px dashed rgba(255, 255, 255, 0.35);
+      z-index: 20;
+      opacity: 0.6;
+    }
+
+    #top-bar {
+      position: fixed;
+      top: 14px;
+      right: 16px;
+      left: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      z-index: 100;
+      pointer-events: none;
+    }
+    #top-bar > * { pointer-events: auto; }
+
+    #title-tag {
+      margin-right: auto;
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    }
+
+    #fps-counter {
+      color: #38bdf8;
+      font-size: 13px;
+      font-weight: 600;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+      user-select: none;
+    }
+    #biome-label {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+      user-select: none;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .top-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 20, 28, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      padding: 6px 12px;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .top-btn:hover, .top-btn:active {
+      background: rgba(30, 41, 59, 0.95);
+      color: #38bdf8;
+    }
+  </style>
+  <script>
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+      var isMobileUA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|webOS/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+      var isTouchOnly = window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+      var isMobile = params.has('mobile') || (isMobileUA && isTouch) || isTouchOnly;
+      if (isMobile) {
+        document.documentElement.classList.add('force-mobile');
+        document.addEventListener('DOMContentLoaded', function() {
+          document.body.classList.add('force-mobile');
+        });
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+
+  <div id="top-bar">
+    <div id="title-tag">WANDERLUST [TAB S6 LITE / LOW POWER]</div>
+    <div id="fps-counter">-- FPS</div>
+    <div id="biome-label"></div>
+    <button id="time-toggle" class="top-btn">Dusk</button>
+    <button id="zoom-toggle" class="top-btn">Zoom: 20m</button>
+    <button id="sound-toggle" class="top-btn">Audio ON</button>
+    <a href="index.html" class="top-btn">Full Graphics</a>
+  </div>
+
+  <div id="touch-controls">
+    <div id="joystick-base">
+      <div id="joystick-knob"></div>
+    </div>
+    <div id="boost-btn">BOOST</div>
+  </div>
+
+  <script type="module" src="./src/lowpower/main_lowpower.js"></script>
+</body>
+</html>

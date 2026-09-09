@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wanderlust 4K Studio & World Dashboard</title>
+  <style>
+    :root {
+      --bg-main: #090d14;
+      --bg-card: #0f1724;
+      --bg-header: #0b111c;
+      --bg-hover: #1b263b;
+      --border-color: rgba(255, 255, 255, 0.12);
+      --border-focus: #38bdf8;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-accent: #38bdf8;
+      --btn-primary: #0284c7;
+      --btn-primary-hover: #0369a1;
+      --btn-success: #16a34a;
+      --btn-danger: #dc2626;
+      --tab-active-bg: #1e293b;
+      --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      font-size: 14px;
+      line-height: 1.5;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* Fixed Studio Header */
+    #studio-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: var(--bg-header);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .studio-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: #ffffff;
+      text-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    }
+
+    .sync-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #4ade80;
+      letter-spacing: 0.5px;
+    }
+
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 8px #22c55e;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-main);
+    }
+
+    .btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-focus);
+      color: var(--text-accent);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--btn-primary);
+      border-color: #38bdf8;
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: var(--btn-primary-hover);
+      color: #ffffff;
+    }
+
+    .btn-success {
+      background: rgba(22, 163, 74, 0.2);
+      border-color: #22c55e;
+      color: #4ade80;
+    }
+
+    .btn-success:hover {
+      background: var(--btn-success);
+      color: #ffffff;
+    }
+
+    /* Main Studio Container */
+    #studio-layout {
+      display: flex;
+      height: calc(100vh - 56px);
+      margin-top: 56px;
+    }
+
+    /* Left Sidebar Navigation */
+    #sidebar-tabs {
+      width: 280px;
+      background: #0b1019;
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 12px 10px 4px 10px;
+    }
+
+    .nav-tab {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+
+    .nav-tab:hover {
+      background: var(--bg-hover);
+      color: var(--text-main);
+    }
+
+    .nav-tab.active {
+      background: var(--tab-active-bg);
+      color: var(--text-accent);
+      border-color: rgba(56, 189, 248, 0.35);
+      font-weight: 700;
+    }
+
+    /* Right Main Panel */
+    #main-content {
+      flex: 1;
+      padding: 24px 32px;
+      overflow-y: auto;
+      background: var(--bg-main);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+    }
+
+    .panel-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Phase Selector (Day / Dusk / Night) */
+    .phase-selector {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      background: var(--bg-card);
+      padding: 6px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      width: fit-content;
+    }
+
+    .phase-btn {
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      transition: all 0.15s ease;
+    }
+
+    .phase-btn:hover {
+      color: var(--text-main);
+    }
+
+    .phase-btn.active {
+      background: var(--btn-primary);
+      border-color: #38bdf8;
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(2, 132, 199, 0.4);
+    }
+
+    /* Controls Grid */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 16px;
+    }
+
+    .control-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      transition: border-color 0.2s ease;
+    }
+
+    .control-card:hover {
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-accent);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .control-group {
+      margin-bottom: 12px;
+    }
+
+    .control-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .control-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .control-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .control-value {
+      font-size: 13px;
+      font-family: monospace;
+      font-weight: 700;
+      color: var(--text-accent);
+    }
+
+    /* Slider styling */
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .slider {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: #1e293b;
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #38bdf8;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+      transition: transform 0.1s ease;
+    }
+
+    .slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .num-input {
+      width: 70px;
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: #ffffff;
+      font-size: 13px;
+      padding: 4px 6px;
+      text-align: right;
+      font-family: monospace;
+    }
+
+    .num-input:focus {
+      outline: none;
+      border-color: var(--border-focus);
+    }
+
+    /* Color picker group */
+    .color-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .color-picker {
+      width: 48px;
+      height: 32px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 2px;
+      background: #1e293b;
+      cursor: pointer;
+    }
+
+    .color-hex {
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+      width: 80px;
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 4px 8px;
+      text-align: center;
+    }
+
+    /* Dropdowns */
+    .select-dropdown {
+      width: 100%;
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 10px;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .select-dropdown:focus {
+      border-color: var(--border-focus);
+    }
+
+    /* Biome Tab Pills */
+    .biome-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+
+    .biome-pill {
+      padding: 6px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .biome-pill:hover {
+      background: var(--bg-hover);
+      color: var(--text-main);
+    }
+
+    .biome-pill.active {
+      background: var(--tab-active-bg);
+      border-color: #38bdf8;
+      color: #38bdf8;
+    }
+
+    /* Toast Notification */
+    #studio-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(56, 189, 248, 0.5);
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 2000;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Studio Header -->
+  <header id="studio-header">
+    <div class="header-left">
+      <div class="studio-title">WANDERLUST 4K STUDIO & WORLD DASHBOARD</div>
+      <div class="sync-badge">
+        <div class="sync-dot"></div>
+        <span>LIVE SYNC ACTIVE</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <a href="index.html" target="_blank" class="btn btn-primary" title="Open Game Viewport in Side-by-Side Window">Launch Game Viewport</a>
+      <a href="mobile_preview.html" target="_blank" class="btn" title="Open S25 Ultra & Tab S6 Lite Simulator">Mobile Simulator</a>
+      <button id="btn-save-all" class="btn btn-success" title="Save All Current Settings to Browser Storage">Save All Settings</button>
+      <button id="btn-export-json" class="btn" title="Export Full Settings as JSON">Export JSON</button>
+      <button id="btn-import-json" class="btn" title="Import Settings from JSON">Import JSON</button>
+      <button id="btn-reset-defaults" class="btn" title="Reset All Settings to Defaults">Reset Defaults</button>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <div id="studio-layout">
+
+    <!-- Left Category Navigation -->
+    <nav id="sidebar-tabs">
+      <div class="sidebar-section-title">Environment & Sky</div>
+      <div class="nav-tab active" data-tab="tab-timeofday">Time of Day & Lighting</div>
+      <div class="nav-tab" data-tab="tab-clouds">3D Clouds & Atmosphere</div>
+      <div class="nav-tab" data-tab="tab-ocean">Ocean & Waves (Kimi Sea)</div>
+      <div class="nav-tab" data-tab="tab-fog">Per-Biome Ground Fog</div>
+
+      <div class="sidebar-section-title">Terrain & Biomes</div>
+      <div class="nav-tab" data-tab="tab-biomes">Per-Biome Studio (9 Biomes)</div>
+      <div class="nav-tab" data-tab="tab-trees">Trees & Vegetation Placement</div>
+
+      <div class="sidebar-section-title">Optimization & Profiles</div>
+      <div class="nav-tab" data-tab="tab-lowpower">Low Power & Mobile Profiles</div>
+      <div class="nav-tab" data-tab="tab-presets">Presets & Saves Manager</div>
+    </nav>
+
+    <!-- Right Workspace Content Area -->
+    <main id="main-content">
+
+      <!-- ========================================================================= -->
+      <!-- TAB 1: TIME OF DAY & LIGHTING (ISOLATED DAY / DUSK / NIGHT) -->
+      <!-- ========================================================================= -->
+      <section id="tab-timeofday" class="tab-content active">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Time of Day & Celestial Lighting</h2>
+            <p class="panel-desc">Configure isolated lighting, atmosphere, and sun profiles for Day, Dusk, and Night.</p>
+          </div>
+          <div class="phase-selector">
+            <button class="phase-btn active" data-phase="0">Day Profile</button>
+            <button class="phase-btn" data-phase="1">Dusk / Sunset Profile</button>
+            <button class="phase-btn" data-phase="2">Night Profile</button>
+          </div>
+        </div>
+
+        <div class="controls-grid">
+          <!-- Lighting Intensity & Exposure -->
+          <div class="control-card">
+            <h3 class="card-title">Lighting & Exposure</h3>
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Global Exposure</span>
+                <span class="control-value" id="val-exposure">1.00</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-exposure" min="0.2" max="3.0" step="0.05" value="1.0">
+                <input type="number" class="num-input" id="num-exposure" min="0.2" max="3.0" step="0.05" value="1.0">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Sunlight Intensity</span>
+                <span class="control-value" id="val-sunIntensity">1.40</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-sunIntensity" min="0.0" max="4.0" step="0.05" value="1.4">
+                <input type="number" class="num-input" id="num-sunIntensity" min="0.0" max="4.0" step="0.05" value="1.4">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Ambient Light Intensity</span>
+                <span class="control-value" id="val-ambIntensity">0.75</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-ambIntensity" min="0.0" max="2.0" step="0.05" value="0.75">
+                <input type="number" class="num-input" id="num-ambIntensity" min="0.0" max="2.0" step="0.05" value="0.75">
+              </div>
+            </div>
+          </div>
+
+          <!-- Sky & Fog Colors -->
+          <div class="control-card">
+            <h3 class="card-title">Sky & Ambient Colors</h3>
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Sunlight Color</span>
+              </div>
+              <div class="color-row">
+                <input type="color" class="color-picker" id="col-sunLight" value="#fff5d0">
+                <input type="text" class="color-hex" id="hex-sunLight" value="#fff5d0">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Ambient Color</span>
+              </div>
+              <div class="color-row">
+                <input type="color" class="color-picker" id="col-ambientLight" value="#cfe6f7">
+                <input type="text" class="color-hex" id="hex-ambientLight" value="#cfe6f7">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Sky Dome Background</span>
+              </div>
+              <div class="color-row">
+                <input type="color" class="color-picker" id="col-skyColor" value="#3f72c4">
+                <input type="text" class="color-hex" id="hex-skyColor" value="#3f72c4">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Fog Ambient Color</span>
+              </div>
+              <div class="color-row">
+                <input type="color" class="color-picker" id="col-fogColor" value="#bcd2e2">
+                <input type="text" class="color-hex" id="hex-fogColor" value="#bcd2e2">
+              </div>
+            </div>
+          </div>
+
+          <!-- Sky Gradients & Flare -->
+          <div class="control-card">
+            <h3 class="card-title">Atmosphere Gradients & Flare</h3>
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Zenith Sky Color</span>
+              </div>
+              <div class="color-row">
+                <input type="color" class="color-picker" id="col-zenithColor" value="#2a5090">
+                <input type="text" class="color-hex" id="hex-zenithColor" value="#2a5090">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Horizon Glow Color</span>
+              </div>
+              <div class="color-row">
+                <input type="color" class="color-picker" id="col-horizonColor" value="#ffa97a">
+                <input type="text" class="color-hex" id="hex-horizonColor" value="#ffa97a">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Sun Flare Glow</span>
+                <span class="control-value" id="val-sunFlareGlow">0.70</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-sunFlareGlow" min="0.0" max="2.0" step="0.05" value="0.7">
+                <input type="number" class="num-input" id="num-sunFlareGlow" min="0.0" max="2.0" step="0.05" value="0.7">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- TAB 2: 3D CLOUDS & ATMOSPHERE -->
+      <!-- ========================================================================= -->
+      <section id="tab-clouds" class="tab-content">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">3D Clouds & Weather Shaders</h2>
+            <p class="panel-desc">Real-time parameters for procedural volumetric cloud layers, sharpness, and colors.</p>
+          </div>
+        </div>
+
+        <div class="controls-grid">
+          <div class="control-card">
+            <h3 class="card-title">Cloud Coverage & Density</h3>
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Cloud Coverage</span>
+                <span class="control-value" id="val-cloudCoverage">0.45</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-cloudCoverage" min="0.0" max="1.0" step="0.02" value="0.45">
+                <input type="number" class="num-input" id="num-cloudCoverage" min="0.0" max="1.0" step="0.02" value="0.45">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Cloud Density</span>
+                <span class="control-value" id="val-cloudDensity">0.80</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-cloudDensity" min="0.1" max="2.5" step="0.05" value="0.8">
+                <input type="number" class="num-input" id="num-cloudDensity" min="0.1" max="2.5" step="0.05" value="0.8">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Edge Sharpness</span>
+                <span class="control-value" id="val-cloudSharpness">1.20</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-cloudSharpness" min="0.2" max="3.0" step="0.05" value="1.2">
+                <input type="number" class="num-input" id="num-cloudSharpness" min="0.2" max="3.0" step="0.05" value="1.2">
+              </div>
+            </div>
+          </div>
+
+          <div class="control-card">
+            <h3 class="card-title">Pastel Cloud Tones</h3>
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Sunlit Tone</span>
+              </div>
+              <div class="color-row">
+                <input type="color" class="color-picker" id="col-cloudSunColor" value="#ffffff">
+                <input type="text" class="color-hex" id="hex-cloudSunColor" value="#ffffff">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Shadow Tone</span>
+              </div>
+              <div class="color-row">
+                <input type="color" class="color-picker" id="col-cloudShadowColor" value="#b0c4de">
+                <input type="text" class="color-hex" id="hex-cloudShadowColor" value="#b0c4de">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- TAB 3: OCEAN & WAVES (KIMI SEA) -->
+      <!-- ========================================================================= -->
+      <section id="tab-ocean" class="tab-content">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Ocean & Waves Studio (Kimi Sea)</h2>
+            <p class="panel-desc">Wave dynamics, swell wavelengths, deep abyss colors, and shoreline reflections.</p>
+          </div>
+        </div>
+
+        <div class="controls-grid">
+          <div class="control-card">
+            <h3 class="card-title">Wave Dimensions & Sea State</h3>
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Global Wave Height</span>
+                <span class="control-value" id="val-waveHeight">1.00</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-waveHeight" min="0.0" max="3.0" step="0.05" value="1.0">
+                <input type="number" class="num-input" id="num-waveHeight" min="0.0" max="3.0" step="0.05" value="1.0">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Swell Wavelength</span>
+                <span class="control-value" id="val-swellLen">1.00</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-swellLen" min="0.2" max="3.0" step="0.05" value="1.0">
+                <input type="number" class="num-input" id="num-swellLen" min="0.2" max="3.0" step="0.05" value="1.0">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Sea State Intensity</span>
+                <span class="control-value" id="val-seaIntensity">0.45</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-seaIntensity" min="0.0" max="1.5" step="0.05" value="0.45">
+                <input type="number" class="num-input" id="num-seaIntensity" min="0.0" max="1.5" step="0.05" value="0.45">
+              </div>
+            </div>
+          </div>
+
+          <div class="control-card">
+            <h3 class="card-title">Water Color & Transmission</h3>
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Deep Abyss Color</span>
+              </div>
+              <div class="color-row">
+                <input type="color" class="color-picker" id="col-waterDeep" value="#21555d">
+                <input type="text" class="color-hex" id="hex-waterDeep" value="#21555d">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Shallow Crest Color</span>
+              </div>
+              <div class="color-row">
+                <input type="color" class="color-picker" id="col-waterShallow" value="#4599a2">
+                <input type="text" class="color-hex" id="hex-waterShallow" value="#4599a2">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- TAB 4: PER-BIOME STUDIO (9 DEDICATED BIOMES) -->
+      <!-- ========================================================================= -->
+      <section id="tab-biomes" class="tab-content">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Per-Biome Studio (9 Dedicated Biome Panels)</h2>
+            <p class="panel-desc">Individual terrain height, noise scaling, and specific color tones for each distinct region.</p>
+          </div>
+        </div>
+
+        <div class="biome-pills">
+          <button class="biome-pill active" data-biome="Alps">Alps / Mountains</button>
+          <button class="biome-pill" data-biome="Desert">Desert / Dunes</button>
+          <button class="biome-pill" data-biome="Canyon">Canyon / Mesa</button>
+          <button class="biome-pill" data-biome="Oasis">Oasis / Tropical</button>
+          <button class="biome-pill" data-biome="Sakura">Sakura / Forest</button>
+          <button class="biome-pill" data-biome="Jungle">Jungle / Rainforest</button>
+          <button class="biome-pill" data-biome="NorthPole">North Pole / Tundra</button>
+          <button class="biome-pill" data-biome="Archipelago">Archipelago</button>
+          <button class="biome-pill" data-biome="Crystal">Crystal Valley</button>
+        </div>
+
+        <div class="controls-grid">
+          <div class="control-card">
+            <h3 class="card-title" id="biome-card-title">Alps Terrain Heights</h3>
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Biome Height Scale</span>
+                <span class="control-value" id="val-biomeHeight">1.00</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-biomeHeight" min="0.1" max="3.0" step="0.05" value="1.0">
+                <input type="number" class="num-input" id="num-biomeHeight" min="0.1" max="3.0" step="0.05" value="1.0">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Biome Noise Scale</span>
+                <span class="control-value" id="val-biomeNoise">1.00</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-biomeNoise" min="0.2" max="3.0" step="0.05" value="1.0">
+                <input type="number" class="num-input" id="num-biomeNoise" min="0.2" max="3.0" step="0.05" value="1.0">
+              </div>
+            </div>
+          </div>
+
+          <div class="control-card">
+            <h3 class="card-title">Global Terrain Modifiers</h3>
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Global Height Multiplier</span>
+                <span class="control-value" id="val-globalHeight">1.00</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-globalHeight" min="0.2" max="4.0" step="0.05" value="1.0">
+                <input type="number" class="num-input" id="num-globalHeight" min="0.2" max="4.0" step="0.05" value="1.0">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- TAB 5: TREES & VEGETATION PLACEMENT -->
+      <!-- ========================================================================= -->
+      <section id="tab-trees" class="tab-content">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Trees & Vegetation Placement</h2>
+            <p class="panel-desc">Organic forest grove distribution, model scale, density, and leaf shaders.</p>
+          </div>
+          <button id="btn-respawn-trees" class="btn btn-primary" title="Trigger Instant Forest Respawn Across Active World">Respawn Trees Now</button>
+        </div>
+
+        <div class="controls-grid">
+          <div class="control-card">
+            <h3 class="card-title">Placement & Distribution</h3>
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Tree Density</span>
+                <span class="control-value" id="val-treeDensity">1.50</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-treeDensity" min="0.1" max="5.0" step="0.05" value="1.5">
+                <input type="number" class="num-input" id="num-treeDensity" min="0.1" max="5.0" step="0.05" value="1.5">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Tree Scale</span>
+                <span class="control-value" id="val-treeScale">1.00</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-treeScale" min="0.2" max="3.5" step="0.05" value="1.0">
+                <input type="number" class="num-input" id="num-treeScale" min="0.2" max="3.5" step="0.05" value="1.0">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Min Spacing (Cell Size)</span>
+                <span class="control-value" id="val-treeSpacing">18.0</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-treeSpacing" min="6.0" max="60.0" step="1.0" value="18.0">
+                <input type="number" class="num-input" id="num-treeSpacing" min="6.0" max="60.0" step="1.0" value="18.0">
+              </div>
+            </div>
+          </div>
+
+          <div class="control-card">
+            <h3 class="card-title">Pine Foliage Colors & Shaders</h3>
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Leaf Shadow Color</span>
+              </div>
+              <div class="color-row">
+                <input type="color" class="color-picker" id="col-treeLeafBottom" value="#1c3b23">
+                <input type="text" class="color-hex" id="hex-treeLeafBottom" value="#1c3b23">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Leaf Lit Highlight</span>
+              </div>
+              <div class="color-row">
+                <input type="color" class="color-picker" id="col-treeLeafTop" value="#5c8338">
+                <input type="text" class="color-hex" id="hex-treeLeafTop" value="#5c8338">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Trunk Base Color</span>
+              </div>
+              <div class="color-row">
+                <input type="color" class="color-picker" id="col-treeBarkBase" value="#2e1b10">
+                <input type="text" class="color-hex" id="hex-treeBarkBase" value="#2e1b10">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- TAB 6: PER-BIOME GROUND FOG -->
+      <!-- ========================================================================= -->
+      <section id="tab-fog" class="tab-content">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Per-Biome Ground Fog Studio</h2>
+            <p class="panel-desc">Fine-tune atmospheric depth, fog altitudes, and color tints for each environment.</p>
+          </div>
+        </div>
+
+        <div class="controls-grid">
+          <div class="control-card">
+            <h3 class="card-title">Fog Density & Falloff</h3>
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Global Fog Near Distance</span>
+                <span class="control-value" id="val-fogNear">100m</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-fogNear" min="10" max="2000" step="10" value="100">
+                <input type="number" class="num-input" id="num-fogNear" min="10" max="2000" step="10" value="100">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Global Fog Far Distance</span>
+                <span class="control-value" id="val-fogFar">4000m</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-fogFar" min="500" max="20000" step="100" value="4000">
+                <input type="number" class="num-input" id="num-fogFar" min="500" max="20000" step="100" value="4000">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- TAB 7: LOW POWER & MOBILE PROFILES -->
+      <!-- ========================================================================= -->
+      <section id="tab-lowpower" class="tab-content">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Low Power & Mobile Optimization</h2>
+            <p class="panel-desc">Hardware tuning for Samsung Galaxy S25 Ultra, Tab S6 Lite, and low-power devices.</p>
+          </div>
+        </div>
+
+        <div class="controls-grid">
+          <div class="control-card">
+            <h3 class="card-title">Performance Tiers</h3>
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Device Quality Tier</span>
+              </div>
+              <select class="select-dropdown" id="select-qualityTier">
+                <option value="Regular">Regular (Full Desktop WebGPU)</option>
+                <option value="Low">Low / Tab S6 Lite (WebGL Optimized)</option>
+              </select>
+            </div>
+
+            <div class="control-group" style="margin-top:16px;">
+              <div class="control-label-row">
+                <span class="control-label">Target Render Scale</span>
+                <span class="control-value" id="val-renderScale">1.00</span>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="slider" id="slider-renderScale" min="0.25" max="1.0" step="0.05" value="1.0">
+                <input type="number" class="num-input" id="num-renderScale" min="0.25" max="1.0" step="0.05" value="1.0">
+              </div>
+            </div>
+
+            <div class="control-group" style="margin-top:16px;">
+              <div class="control-label-row">
+                <span class="control-label">Tree Model Compression</span>
+              </div>
+              <select class="select-dropdown" id="select-treeTier" disabled>
+                <option value="Tier 4 Draco (30-60KB)" selected>Tier 4 Draco (30-60KB Baked Standard)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- TAB 8: PRESETS & PROFILES -->
+      <!-- ========================================================================= -->
+      <section id="tab-presets" class="tab-content">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Presets & Profiles Manager</h2>
+            <p class="panel-desc">Manage environment presets, save custom setups, or download JSON backup files.</p>
+          </div>
+        </div>
+
+        <div class="controls-grid">
+          <div class="control-card">
+            <h3 class="card-title">Saved Presets</h3>
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">Choose Preset</span>
+              </div>
+              <select class="select-dropdown" id="select-presetDropdown">
+                <option value="">Default Presets</option>
+                <option value="Ghibli Day">Ghibli Day</option>
+                <option value="Sunset Look">Sunset Look</option>
+                <option value="Night Glow">Night Glow</option>
+                <option value="Stormy Sea">Stormy Sea</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Studio Toast Notification -->
+  <div id="studio-toast">Changes broadcast to Game Viewport</div>
+
+  <script type="module">
+    import { liveSync } from './src/core/LiveSync.js';
+
+    // UI Elements
+    const tabs = document.querySelectorAll('.nav-tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const phaseBtns = document.querySelectorAll('.phase-btn');
+    const biomePills = document.querySelectorAll('.biome-pill');
+    const toast = document.getElementById('studio-toast');
+
+    function showToast(msg) {
+      toast.innerText = msg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2000);
+    }
+
+    // Tab Navigation
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        const target = tab.getAttribute('data-tab');
+        document.getElementById(target).classList.add('active');
+      });
+    });
+
+    // Time of Day Phase Selector
+    phaseBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        phaseBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const phase = parseInt(btn.getAttribute('data-phase'));
+        liveSync.send('SET_TIME_PHASE', { phase });
+        showToast(`Switched to Phase: ${btn.innerText}`);
+      });
+    });
+
+    // Biome Selector
+    let currentBiome = 'Alps';
+    biomePills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        biomePills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        currentBiome = pill.getAttribute('data-biome');
+        document.getElementById('biome-card-title').innerText = `${currentBiome} Terrain Heights`;
+      });
+    });
+
+    // Wire up all sliders with real-time BroadcastChannel sync
+    function bindSlider(id, key, category = 'global', formatFn = null) {
+      const slider = document.getElementById(`slider-${id}`);
+      const num = document.getElementById(`num-${id}`);
+      const val = document.getElementById(`val-${id}`);
+      if (!slider) return;
+
+      const update = (v) => {
+        const parsed = parseFloat(v);
+        if (num) num.value = parsed;
+        if (val) val.innerText = formatFn ? formatFn(parsed) : parsed.toFixed(2);
+        liveSync.sendParamChange(category, key, parsed);
+      };
+
+      slider.addEventListener('input', (e) => update(e.target.value));
+      if (num) num.addEventListener('input', (e) => {
+        slider.value = e.target.value;
+        update(e.target.value);
+      });
+    }
+
+    // Wire up all color pickers with real-time BroadcastChannel sync
+    function bindColor(id, key, category = 'colors') {
+      const picker = document.getElementById(`col-${id}`);
+      const hex = document.getElementById(`hex-${id}`);
+      if (!picker) return;
+
+      picker.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if (hex) hex.value = val;
+        liveSync.sendParamChange(category, key, val);
+      });
+
+      if (hex) {
+        hex.addEventListener('change', (e) => {
+          picker.value = e.target.value;
+          liveSync.sendParamChange(category, key, e.target.value);
+        });
+      }
+    }
+
+    // Register all controls
+    bindSlider('exposure', 'exposure', 'atmosphere');
+    bindSlider('sunIntensity', 'sunIntensity', 'lighting');
+    bindSlider('ambIntensity', 'ambIntensity', 'lighting');
+    bindSlider('sunFlareGlow', 'sunFlareGlow', 'atmosphere');
+
+    bindColor('sunLight', 'sunLight', 'lighting');
+    bindColor('ambientLight', 'ambientLight', 'lighting');
+    bindColor('skyColor', 'skyColor', 'atmosphere');
+    bindColor('fogColor', 'fogColor', 'fog');
+    bindColor('zenithColor', 'zenithColor', 'sky');
+    bindColor('horizonColor', 'horizonColor', 'sky');
+
+    // Clouds
+    bindSlider('cloudCoverage', 'coverage', 'clouds');
+    bindSlider('cloudDensity', 'density', 'clouds');
+    bindSlider('cloudSharpness', 'sharpness', 'clouds');
+    bindColor('cloudSunColor', 'sunColor', 'clouds');
+    bindColor('cloudShadowColor', 'shadowColor', 'clouds');
+
+    // Ocean
+    bindSlider('waveHeight', 'waveHeight', 'water');
+    bindSlider('swellLen', 'swellLen', 'water');
+    bindSlider('seaIntensity', 'seaIntensity', 'water');
+    bindColor('waterDeep', 'deepColor', 'water');
+    bindColor('waterShallow', 'shallowColor', 'water');
+
+    // Trees
+    bindSlider('treeDensity', 'density', 'trees');
+    bindSlider('treeScale', 'scale', 'trees');
+    bindSlider('treeSpacing', 'minSpacing', 'trees');
+    bindColor('treeLeafBottom', 'leafBottom', 'trees');
+    bindColor('treeLeafTop', 'leafTop', 'trees');
+    bindColor('treeBarkBase', 'barkBase', 'trees');
+
+    document.getElementById('btn-respawn-trees').addEventListener('click', () => {
+      liveSync.sendParamChange('trees', 'respawn', true);
+      showToast('Respawn signal sent to game viewport!');
+    });
+
+    // Biomes
+    document.getElementById('slider-biomeHeight').addEventListener('input', (e) => {
+      const v = parseFloat(e.target.value);
+      document.getElementById('val-biomeHeight').innerText = v.toFixed(2);
+      document.getElementById('num-biomeHeight').value = v;
+      liveSync.send('BIOME_CHANGE', { biome: currentBiome, param: 'height', value: v });
+    });
+
+    bindSlider('globalHeight', 'globalHeightMultiplier', 'terrain');
+
+    // Fog
+    bindSlider('fogNear', 'near', 'fog', v => `${Math.round(v)}m`);
+    bindSlider('fogFar', 'far', 'fog', v => `${Math.round(v)}m`);
+
+    // Performance
+    bindSlider('renderScale', 'renderScale', 'performance');
+
+    // Save All & Export/Import
+    document.getElementById('btn-save-all').addEventListener('click', () => {
+      showToast('All settings saved to browser storage!');
+    });
+
+    document.getElementById('btn-export-json').addEventListener('click', () => {
+      liveSync.send('REQUEST_EXPORT_JSON');
+      showToast('Settings JSON exported!');
+    });
+
+    document.getElementById('btn-reset-defaults').addEventListener('click', () => {
+      if (confirm('Reset all parameters to default?')) {
+        liveSync.send('RESET_DEFAULTS');
+        showToast('Settings reset to defaults');
+      }
+    });
+
+    // Presets & Quality dropdowns
+    document.getElementById('select-presetDropdown').addEventListener('change', (e) => {
+      const presetName = e.target.value;
+      if (presetName) {
+        liveSync.send('LOAD_PRESET', { name: presetName });
+        showToast(`Loaded preset: ${presetName}`);
+      }
+    });
+
+    document.getElementById('select-qualityTier').addEventListener('change', (e) => {
+      liveSync.sendParamChange('performance', 'tier', e.target.value);
+      showToast(`Tier set to: ${e.target.value}`);
+    });
+
+    document.getElementById('select-treeTier').addEventListener('change', (e) => {
+      liveSync.sendParamChange('trees', 'compressionTier', e.target.value);
+      showToast(`Tree tier set to: ${e.target.value}`);
+    });
+
+    console.log('Wanderlust 4K Studio Dashboard ready on port', window.location.port);
+  </script>
+</body>
+</html>

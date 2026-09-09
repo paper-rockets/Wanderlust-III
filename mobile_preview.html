@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wanderlust Mobile & Tablet Device Simulator</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg-main: #0b0f17;
+      --bg-panel: #131b26;
+      --border-color: rgba(255, 255, 255, 0.15);
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background: var(--bg-main);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #control-header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border-color);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      z-index: 100;
+      flex-wrap: wrap;
+    }
+
+    .header-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-main);
+      text-transform: uppercase;
+      margin-right: 8px;
+    }
+
+    .select-input, .btn {
+      background: rgba(15, 20, 28, 0.9);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .select-input:hover, .btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(30, 41, 59, 0.95);
+    }
+
+    .btn.active {
+      background: rgba(14, 165, 233, 0.2);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .device-info-pill {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-family: monospace;
+    }
+
+    #stage-area {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: radial-gradient(circle at center, #151e2d 0%, #090d14 100%);
+      gap: 30px;
+    }
+
+    .device-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      transition: transform 0.2s ease;
+    }
+
+    .device-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .device-bezel {
+      background: #020408;
+      border-radius: 28px;
+      padding: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(255, 255, 255, 0.1);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .device-bezel.tablet-bezel {
+      border-radius: 20px;
+      padding: 16px;
+    }
+
+    .device-screen-frame {
+      overflow: hidden;
+      border-radius: 18px;
+      background: #000;
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .device-screen-frame iframe {
+      border: none;
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #000;
+    }
+
+    .dual-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+  <header id="control-header">
+    <div class="header-group">
+      <div class="header-title">Mobile Simulator</div>
+      <label for="device-preset-select" style="font-size: 12px; color: var(--text-muted);">Device:</label>
+      <select id="device-preset-select" class="select-input">
+        <option value="s25_ultra" selected>Galaxy S25 Ultra (Phone)</option>
+        <option value="tab_s6_lite">Galaxy Tab S6 Lite (Tablet)</option>
+        <option value="dual_view">Dual View: S25 Ultra + Tab S6 Lite (4K Split)</option>
+      </select>
+
+      <label for="orientation-select" style="font-size: 12px; color: var(--text-muted);">Orientation:</label>
+      <select id="orientation-select" class="select-input">
+        <option value="portrait">Portrait</option>
+        <option value="landscape" selected>Landscape</option>
+      </select>
+
+      <label for="engine-mode-select" style="font-size: 12px; color: var(--text-muted);">Target Engine:</label>
+      <select id="engine-mode-select" class="select-input">
+        <option value="gameplay" selected>Full Graphics (index.html)</option>
+        <option value="lowpower">Tab S6 Lite Low Power (low_power.html)</option>
+        <option value="studio">Studio Suite (studio.html)</option>
+      </select>
+    </div>
+
+    <div class="header-group">
+      <div id="resolution-info" class="device-info-pill">915 x 412 (Landscape)</div>
+      <button id="btn-scale-down" class="btn" title="Scale Zoom Out">Zoom -</button>
+      <span id="scale-indicator" class="device-info-pill">100%</span>
+      <button id="btn-scale-up" class="btn" title="Scale Zoom In">Zoom +</button>
+      <button id="btn-reload" class="btn" title="Reload active preview">Reload</button>
+      <a href="index.html" class="btn">Play Game</a>
+      <a href="studio.html" class="btn active">Studio Suite [4K]</a>
+    </div>
+  </header>
+
+  <main id="stage-area">
+    <div id="single-view-container" class="device-wrapper">
+      <div id="single-device-label" class="device-label">Samsung Galaxy S25 Ultra</div>
+      <div id="single-device-bezel" class="device-bezel">
+        <div id="single-screen-frame" class="device-screen-frame" style="width: 915px; height: 412px;">
+          <iframe id="single-iframe" src="./index.html?mobile=1"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <div id="dual-view-container" class="dual-container" style="display: none;">
+      <div class="device-wrapper">
+        <div class="device-label">Samsung Galaxy S25 Ultra (Full WebGPU)</div>
+        <div class="device-bezel" id="dual-s25-bezel">
+          <div id="dual-s25-frame" class="device-screen-frame" style="width: 915px; height: 412px;">
+            <iframe id="dual-s25-iframe" src="./index.html?mobile=1"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="device-wrapper">
+        <div class="device-label">Samsung Galaxy Tab S6 Lite (Low Power)</div>
+        <div class="device-bezel tablet-bezel" id="dual-tab-bezel">
+          <div id="dual-tab-frame" class="device-screen-frame" style="width: 1280px; height: 800px;">
+            <iframe id="dual-tab-iframe" src="./low_power.html?mobile=1"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const DEVICE_SPECS = {
+      s25_ultra: {
+        name: 'Samsung Galaxy S25 Ultra',
+        portrait: { w: 412, h: 915 },
+        landscape: { w: 915, h: 412 },
+        dpr: 3.0,
+        bezelClass: '',
+        defaultEngine: 'gameplay'
+      },
+      tab_s6_lite: {
+        name: 'Samsung Galaxy Tab S6 Lite',
+        portrait: { w: 800, h: 1280 },
+        landscape: { w: 1280, h: 800 },
+        dpr: 1.5,
+        bezelClass: 'tablet-bezel',
+        defaultEngine: 'lowpower'
+      }
+    };
+
+    let currentPreset = 's25_ultra';
+    let currentOrientation = 'landscape';
+    let currentEngine = 'gameplay';
+    let currentZoom = 1.0;
+
+    const deviceSelect = document.getElementById('device-preset-select');
+    const orientSelect = document.getElementById('orientation-select');
+    const engineSelect = document.getElementById('engine-mode-select');
+    const resInfo = document.getElementById('resolution-info');
+    const scaleIndicator = document.getElementById('scale-indicator');
+    const btnScaleDown = document.getElementById('btn-scale-down');
+    const btnScaleUp = document.getElementById('btn-scale-up');
+    const btnReload = document.getElementById('btn-reload');
+
+    const singleContainer = document.getElementById('single-view-container');
+    const dualContainer = document.getElementById('dual-view-container');
+    const singleLabel = document.getElementById('single-device-label');
+    const singleBezel = document.getElementById('single-device-bezel');
+    const singleFrame = document.getElementById('single-screen-frame');
+    const singleIframe = document.getElementById('single-iframe');
+
+    const dualS25Frame = document.getElementById('dual-s25-frame');
+    const dualTabFrame = document.getElementById('dual-tab-frame');
+    const dualS25Iframe = document.getElementById('dual-s25-iframe');
+    const dualTabIframe = document.getElementById('dual-tab-iframe');
+
+    function getEngineUrl(engine) {
+      if (engine === 'lowpower') return './low_power.html?mobile=1';
+      if (engine === 'studio') return './studio.html?mobile=1';
+      return './index.html?mobile=1';
+    }
+
+    function updateView() {
+      if (currentPreset === 'dual_view') {
+        singleContainer.style.display = 'none';
+        dualContainer.style.display = 'flex';
+
+        const isPort = currentOrientation === 'portrait';
+        const s25W = isPort ? DEVICE_SPECS.s25_ultra.portrait.w : DEVICE_SPECS.s25_ultra.landscape.w;
+        const s25H = isPort ? DEVICE_SPECS.s25_ultra.portrait.h : DEVICE_SPECS.s25_ultra.landscape.h;
+        const tabW = isPort ? DEVICE_SPECS.tab_s6_lite.portrait.w : DEVICE_SPECS.tab_s6_lite.landscape.w;
+        const tabH = isPort ? DEVICE_SPECS.tab_s6_lite.portrait.h : DEVICE_SPECS.tab_s6_lite.landscape.h;
+
+        dualS25Frame.style.width = s25W + 'px';
+        dualS25Frame.style.height = s25H + 'px';
+        dualTabFrame.style.width = tabW + 'px';
+        dualTabFrame.style.height = tabH + 'px';
+
+        dualContainer.style.transform = `scale(${currentZoom})`;
+        resInfo.innerText = `Dual 4K Split: S25 (${s25W}x${s25H}) + Tab S6 Lite (${tabW}x${tabH})`;
+      } else {
+        singleContainer.style.display = 'flex';
+        dualContainer.style.display = 'none';
+
+        const spec = DEVICE_SPECS[currentPreset];
+        const dims = (currentOrientation === 'portrait') ? spec.portrait : spec.landscape;
+
+        singleLabel.innerText = spec.name;
+        singleFrame.style.width = dims.w + 'px';
+        singleFrame.style.height = dims.h + 'px';
+        
+        singleBezel.className = 'device-bezel ' + spec.bezelClass;
+        singleContainer.style.transform = `scale(${currentZoom})`;
+
+        resInfo.innerText = `${dims.w} x ${dims.h} (${currentOrientation.toUpperCase()}) | DPR: ${spec.dpr}`;
+      }
+      scaleIndicator.innerText = Math.round(currentZoom * 100) + '%';
+    }
+
+    function applyEngineUrls() {
+      if (currentPreset === 'dual_view') {
+        dualS25Iframe.src = './index.html?mobile=1';
+        dualTabIframe.src = './low_power.html?mobile=1';
+      } else {
+        singleIframe.src = getEngineUrl(currentEngine);
+      }
+    }
+
+    deviceSelect.addEventListener('change', (e) => {
+      currentPreset = e.target.value;
+      if (currentPreset === 'tab_s6_lite') {
+        currentEngine = 'lowpower';
+        engineSelect.value = 'lowpower';
+      } else if (currentPreset === 's25_ultra') {
+        currentEngine = 'gameplay';
+        engineSelect.value = 'gameplay';
+      }
+      updateView();
+      applyEngineUrls();
+    });
+
+    orientSelect.addEventListener('change', (e) => {
+      currentOrientation = e.target.value;
+      updateView();
+    });
+
+    engineSelect.addEventListener('change', (e) => {
+      currentEngine = e.target.value;
+      applyEngineUrls();
+    });
+
+    btnScaleDown.addEventListener('click', () => {
+      currentZoom = Math.max(0.4, currentZoom - 0.1);
+      updateView();
+    });
+
+    btnScaleUp.addEventListener('click', () => {
+      currentZoom = Math.min(2.0, currentZoom + 0.1);
+      updateView();
+    });
+
+    btnReload.addEventListener('click', () => {
+      if (currentPreset === 'dual_view') {
+        dualS25Iframe.contentWindow.location.reload();
+        dualTabIframe.contentWindow.location.reload();
+      } else {
+        singleIframe.contentWindow.location.reload();
+      }
+    });
+
+    updateView();
+  </script>
+</body>
+</html>

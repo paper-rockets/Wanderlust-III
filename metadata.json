@@ -1,0 +1,6 @@
+{
+  "name": "Wanderlust",
+  "description": "Infinite procedural 3D flying engine and exploration game built with Three.js",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

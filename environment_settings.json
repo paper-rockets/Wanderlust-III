@@ -1,0 +1,282 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WANDERLUST webgpu Environment & Visual Settings",
+  "version": "1.2.0",
+  "note": "Synced from src/main.js envConfigs on 2026-08-20",
+  "presets": {
+    "day": {
+      "timeOfDay": "Day",
+      "timePhase": 0,
+      "atmosphereAndWeather": {
+        "groundFog": {
+          "enableFog": false,
+          "biomeFogOffset": 0,
+          "fogColor": "#b8daf2",
+          "fogNear": 150,
+          "fogFar": 3000
+        },
+        "skyZenith": "#3a88d6",
+        "skyHorizon": "#b8daf2",
+        "skyColor": "#3a88d6",
+        "fogColor": "#b8daf2",
+        "ambientLight": "#d8eefa",
+        "ambIntensity": 1.25,
+        "waterGlint": "#fff0d0",
+        "globalBrightness": 1.8
+      },
+      "sunAndSunlight": {
+        "sunDiscColor": "#ffffff",
+        "sunDiscScale": 1.8,
+        "sunAltitudeHeight": 10000,
+        "sunAzimuth": 0,
+        "sunDistance": 20000,
+        "lockSunToPlayer": true,
+        "sunlightColor": "#fffbf0",
+        "sunlightIntensity": 2.50,
+        "waterGlintColor": "#fff0d0",
+        "sunMeshBaseRadius": 600,
+        "sunPositionFormula": {
+          "x": "player.x + sin(azimuth) * sunDistance",
+          "y": "player.y * 0.45 + sunAltitudeHeight",
+          "z": "player.z - cos(azimuth) * sunDistance"
+        }
+      },
+      "godRaysEditor": {
+        "enableGodRays": true,
+        "rayIntensity": 0.60,
+        "rayDecayLength": 0.92,
+        "rayDensitySpread": 0.5,
+        "rayWeightBrightness": 0.80,
+        "rayInnerColor": "#ffea9f",
+        "rayOuterColor": "#ff9933",
+        "occlusionMinInclusion": 0.45,
+        "occlusionMaxCutoff": 0.85,
+        "particleDitherHaze": 1,
+        "screenEdgeFadeDist": 1.5,
+        "bloomHaloRadius": 0.2,
+        "bloomHaloStrength": 0.0,
+        "samples": 32
+      },
+      "proceduralSky": {
+        "cloudCoverage": 0.45,
+        "cloudEdge": 0.06,
+        "cloudSpeed": 0.018,
+        "skyZenith": "#3a88d6",
+        "skyHorizon": "#b8daf2",
+        "cloudColor": "#fffcf5",
+        "cloudShadow": "#8ca4c8",
+        "stormTurbulence": 0,
+        "stormDarken": 0,
+        "cloudOpacity": 1.0,
+        "weather": "clear"
+      },
+      "water": {
+        "shore": {
+          "sandColor": "#ede7ce",
+          "shoreShallowColor": "#99ddda",
+          "shoreDepth": 6.0,
+          "shoreOpacity": 0.1,
+          "shoreFoamWidth": 2.2,
+          "shoreFoamSpeed": 0.8,
+          "shoreFoamStrength": 1.0,
+          "shoreRefraction": 0.35
+        }
+      },
+      "trees": {
+        "tier": "Extreme (45K)",
+        "preset": "spring",
+        "leafBottom": "#1c3b23",
+        "leafTop": "#5c8338",
+        "leafVarColor": "#1e4430",
+        "leafBrightness": 1.05,
+        "leafGradPower": 1.1,
+        "barkScale": 5.6,
+        "barkBrightness": 1.45
+      },
+      "envConfigsRaw": {
+        "bg": "0x3a88d6",
+        "fog": "0xb8daf2",
+        "amb": "0xd8eefa",
+        "dir": "0xfffbf0",
+        "ambI": 1.25,
+        "dirI": 2.50,
+        "starOp": 0,
+        "sunY": 10000,
+        "moonY": -8000,
+        "glintCol": "0xfff0d0",
+        "cloudCol": "0xfffcf5"
+      }
+    },
+    "dusk": {
+      "timeOfDay": "Dusk",
+      "timePhase": 1,
+      "atmosphereAndWeather": {
+        "groundFog": {
+          "enableFog": false,
+          "biomeFogOffset": 0,
+          "fogColor": "#ffa07a",
+          "fogNear": 150,
+          "fogFar": 3000
+        },
+        "skyZenith": "#2a5090",
+        "skyHorizon": "#ffa07a",
+        "skyColor": "#ffa07a",
+        "fogColor": "#ffa07a",
+        "ambientLight": "#ffdab9",
+        "ambIntensity": 1.10,
+        "waterGlint": "#ffaa00",
+        "globalBrightness": 1.8
+      },
+      "sunAndSunlight": {
+        "sunDiscColor": "#ffffff",
+        "sunDiscScale": 1.8,
+        "sunAltitudeHeight": 160,
+        "sunAzimuth": 0,
+        "sunDistance": 20000,
+        "lockSunToPlayer": true,
+        "sunlightColor": "#ffaa00",
+        "sunlightIntensity": 3.20,
+        "waterGlintColor": "#ffaa00",
+        "sunMeshBaseRadius": 600,
+        "sunPositionFormula": {
+          "x": "player.x + sin(azimuth) * sunDistance",
+          "y": "player.y * 0.45 + sunAltitudeHeight",
+          "z": "player.z - cos(azimuth) * sunDistance"
+        }
+      },
+      "godRaysEditor": {
+        "enableGodRays": true,
+        "rayIntensity": 0.60,
+        "rayDecayLength": 0.92,
+        "rayDensitySpread": 0.5,
+        "rayWeightBrightness": 0.80,
+        "rayInnerColor": "#ffea9f",
+        "rayOuterColor": "#ff9933",
+        "occlusionMinInclusion": 0.45,
+        "occlusionMaxCutoff": 0.85,
+        "particleDitherHaze": 1,
+        "screenEdgeFadeDist": 1.5,
+        "bloomHaloRadius": 0.2,
+        "bloomHaloStrength": 0.0,
+        "samples": 32
+      },
+      "proceduralSky": {
+        "cloudCoverage": 0.45,
+        "cloudEdge": 0.06,
+        "cloudSpeed": 0.018,
+        "skyZenith": "#2a5090",
+        "skyHorizon": "#ffa07a",
+        "cloudColor": "#fffaec",
+        "cloudShadow": "#8ca4c8",
+        "stormTurbulence": 0,
+        "stormDarken": 0,
+        "cloudOpacity": 1.0,
+        "weather": "clear"
+      },
+      "water": {
+        "shore": {
+          "sandColor": "#ede7ce",
+          "shoreShallowColor": "#99ddda",
+          "shoreDepth": 6.0,
+          "shoreOpacity": 0.1,
+          "shoreFoamWidth": 2.2,
+          "shoreFoamSpeed": 0.8,
+          "shoreFoamStrength": 1.0,
+          "shoreRefraction": 0.35
+        }
+      },
+      "trees": {
+        "tier": "Extreme (45K)",
+        "preset": "autumn",
+        "leafBottom": "#ffaf36",
+        "leafTop": "#d94d1a",
+        "leafVarColor": "#8f2409",
+        "leafBrightness": 1.05,
+        "leafGradPower": 1.1,
+        "barkScale": 5.6,
+        "barkBrightness": 1.45
+      },
+      "envConfigsRaw": {
+        "bg": "0x2a5090",
+        "fog": "0xffa07a",
+        "amb": "0xffdab9",
+        "dir": "0xffaa00",
+        "ambI": 1.10,
+        "dirI": 3.20,
+        "starOp": 0,
+        "sunY": 160,
+        "moonY": 200,
+        "glintCol": "0xffaa00",
+        "cloudCol": "0xfffaec"
+      }
+    },
+    "night": {
+      "timeOfDay": "Night",
+      "timePhase": 2,
+      "moonlightAndNight": {
+        "globalBrightness": 1.8,
+        "moonlightColor": "#d8e8ff",
+        "moonlightPower": 2.0,
+        "nightFillColor": "#485878",
+        "nightFillPower": 0.95,
+        "nightSkyColor": "#080d1e",
+        "nightFogColor": "#14223d",
+        "moonAltitude": 9000,
+        "moonDistance": 20000,
+        "moonMeshBaseRadius": 450,
+        "moonHaloRadius": 1200
+      },
+      "sunAndSunlight": {
+        "sunDiscColor": "#ffffff",
+        "sunDiscScale": 1.8,
+        "sunAltitudeHeight": -8000,
+        "sunAzimuth": 0,
+        "sunDistance": 20000,
+        "lockSunToPlayer": true,
+        "sunlightColor": "#d8e8ff",
+        "sunlightIntensity": 0.0,
+        "waterGlintColor": "#88b0e8"
+      },
+      "godRaysEditor": {
+        "enableGodRays": false,
+        "rayIntensity": 0.0
+      },
+      "water": {
+        "shore": {
+          "sandColor": "#ede7ce",
+          "shoreShallowColor": "#99ddda",
+          "shoreDepth": 6.0,
+          "shoreOpacity": 0.1,
+          "shoreFoamWidth": 2.2,
+          "shoreFoamSpeed": 0.8,
+          "shoreFoamStrength": 1.0,
+          "shoreRefraction": 0.35
+        }
+      },
+      "trees": {
+        "tier": "Extreme (45K)",
+        "preset": "winter",
+        "leafBottom": "#203a3d",
+        "leafTop": "#eaf5fa",
+        "leafVarColor": "#8bb6c9",
+        "leafBrightness": 1.15,
+        "leafGradPower": 1.3,
+        "barkScale": 5.6,
+        "barkBrightness": 1.40
+      },
+      "envConfigsRaw": {
+        "bg": "0x080d1e",
+        "fog": "0x14223d",
+        "amb": "0x485878",
+        "dir": "0xd8e8ff",
+        "ambI": 0.95,
+        "dirI": 2.0,
+        "starOp": 1.0,
+        "sunY": -8000,
+        "moonY": 9000,
+        "glintCol": "0x88b0e8",
+        "cloudCol": "0x162238"
+      }
+    }
+  }
+}
